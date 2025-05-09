@@ -2,12 +2,37 @@
 
 import Link from "next/link"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Menu, X, User, Bell } from "lucide-react"
+import {
+  Search,
+  Menu,
+  X,
+  User,
+  Bell,
+  LogOut,
+  Settings,
+} from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { useAuth } from "@/contexts/AuthContext"
 
 export function MainHeader() {
+  const router = useRouter()
+  const { user, logout, isAuthenticated } = useAuth()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  const handleLogout = () => {
+    logout()
+    router.push('/login')
+  }
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -28,7 +53,7 @@ export function MainHeader() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-8">
-            <Link href="/complaints" className="text-gray-700 hover:text-primary font-medium">
+            <Link href="/complaints/new" className="text-gray-700 hover:text-primary font-medium">
               민원신청
             </Link>
             <Link href="/status" className="text-gray-700 hover:text-primary font-medium">
@@ -52,12 +77,53 @@ export function MainHeader() {
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             </div>
+            
             <Button variant="ghost" size="icon" className="text-gray-700">
               <Bell className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" className="text-gray-700">
-              <User className="h-5 w-5" />
-            </Button>
+            
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-gray-700">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>
+                    <div className="font-medium">{user?.name || '사용자'}</div>
+                    <div className="text-xs text-muted-foreground">{user?.email}</div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <Link href="/profile" className="flex items-center w-full">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>내 정보</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  {user?.role === 'ADMIN' && (
+                    <DropdownMenuItem>
+                      <Link href="/admin" className="flex items-center w-full">
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>관리자</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>로그아웃</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button asChild variant="ghost" size="sm" className="text-gray-700">
+                <Link href="/login">
+                  <User className="mr-2 h-4 w-4" />
+                  로그인
+                </Link>
+              </Button>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -82,7 +148,7 @@ export function MainHeader() {
               <Search className="absolute left-7 top-[5.5rem] transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             </div>
             <nav className="flex flex-col space-y-3">
-              <Link href="/complaints" className="text-gray-700 hover:text-primary font-medium py-2">
+              <Link href="/complaints/new" className="text-gray-700 hover:text-primary font-medium py-2">
                 민원신청
               </Link>
               <Link href="/status" className="text-gray-700 hover:text-primary font-medium py-2">
@@ -99,10 +165,19 @@ export function MainHeader() {
                   <Bell className="h-4 w-4 mr-2" />
                   알림
                 </Button>
-                <Button variant="outline" size="sm" className="flex-1 border-gray-200">
-                  <User className="h-4 w-4 mr-2" />
-                  로그인
-                </Button>
+                {isAuthenticated ? (
+                  <Button variant="outline" size="sm" className="flex-1 border-gray-200" onClick={handleLogout}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    로그아웃
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" className="flex-1 border-gray-200" asChild>
+                    <Link href="/login">
+                      <User className="h-4 w-4 mr-2" />
+                      로그인
+                    </Link>
+                  </Button>
+                )}
               </div>
             </nav>
           </div>
